@@ -1,8 +1,13 @@
 from utils.helpers import Dir
 import pandas as pd
 import numpy as np
-from typing import List
+from typing import List, Dict
 from datetime import datetime
+
+
+CURRENCY = '$'
+
+POSITIONS = ['UTG1', 'UTG2', 'UTG3', 'MP1', 'MP2', 'MP3', 'CO', 'BUT', 'SB', 'BB']
 
 
 class Data:
@@ -25,15 +30,52 @@ class Data:
 
 class Player:
 
-    def __init__(self, lst: List[str]):
-        ...
+    def __init__(self, s: str):
+
+        cp = s.find(':')
+        bp = s.find('(')
+
+        self.ID = s[cp + 2:bp - 1]
+        self.Seat = int(s[cp - 1])
+        self.Position = None
+        self.Chips = float(s[bp + 2:s.find(' ', bp)])
+
+        self.Ante = 0.
+        self.SB = 0.
+        self.BB = 0.
+        self.HoleCards: str | None = None
+
+    def __repr__(self):
+        return f'Player {self.ID} on seat {self.Seat}'
+
+    @property
+    def committment(self):
+        return self.Ante + self.SB + self.BB
+
+    def set_ante(self, v: float):
+        self.Ante = v
+
+    def set_small_blind(self, v: float):
+        self.SB = v
+
+    def set_big_blind(self, v: float):
+        self.BB = v
+
+    def set_hole_cards(self, s: str):
+        self.HoleCards = s
 
 
 class Hero(Player):
     ...
 
 
+def make_player(s: str):
+    return Hero(s) if 'Hero' in s else Player(s)
+
+
 class Hand:
+
+    Currency = '$'
 
     def __init__(self, lst: List[str]):
 
@@ -52,9 +94,22 @@ class Hand:
         self.Button = int(sl[sl.find('#') + 1])
         self.Players = self.find_players(lst[2:2 + self.MaxPlayers])
         self.NPlayers = len(self.Players)
+        self.find_positions()
+
+        self.Pot = []
+
+        self.add_preflop(lst)
 
     def __repr__(self):
         return f'Poker Hand {self.Number}: {self.Type} (${self.Limits[0]}/${self.Limits[1]}) - {self.Date}'
+
+    @property
+    def pot(self):
+        return sum(pl.committment for pl in self.Players.values())
+
+    def find_positions(self):
+        for pos, pl in zip(np.roll(POSITIONS[-self.NPlayers:], self.Button + 1), self.Players.values()):
+            pl.Position = pos
 
     @staticmethod
     def find_limits(fl: str):
@@ -62,5 +117,37 @@ class Hand:
         return np.array([fl[b:m], fl[m + 2: e]], dtype='float')
 
     @staticmethod
-    def find_players(lst: List[str]) -> List[Player]:
-        return []
+    def find_players(lst: List[str]) -> Dict[str, Player]:
+        players = [make_player(s) for s in lst if 'Seat' in s]
+        return {pl.ID: pl for pl in players}
+
+    def add_preflop(self, lst):
+        first_line = 2 + self.NPlayers
+        last_line = next(i for i in range(first_line, 2 * self.NPlayers + 5) if lst[i] == '*** HOLE CARDS ***')
+        self.add_blinds_and_ante(lst[first_line:last_line])
+        self.Pot.append(sum(pl.committment for pl in self.Players.values()))
+        first_line = last_line + 1
+        self.add_hole_cards(lst[first_line:first_line + self.NPlayers])
+
+    def add_preflop_actions(self, lst):
+        for s in lst:
+            ...
+
+    def add_blinds_and_ante(self, lst):
+        for s in lst:
+            i, v = s[:s.find(':')], float(s[s.find(Hand.Currency) + 1:])
+            if 'ante' in s:
+                self.Players[i].set_ante(v)
+            elif 'small blind' in s:
+                self.Players[i].set_small_blind(v)
+            elif 'big blind' in s:
+                self.Players[i].set_big_blind(v)
+
+    def add_hole_cards(self, lst):
+        for s in lst:
+            pos = s.find('[')
+            if pos == -1:
+                continue
+            i, v = s[s.find('to') + 3:pos - 1], s[pos:]
+            self.Players[i].set_hole_cards(s)
+
