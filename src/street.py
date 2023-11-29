@@ -9,13 +9,18 @@ class Street:
 
     def __init__(self, hand, lst):
 
-        if self.exists(lst):
-            self.Cards = self.find_cards(lst[0])
-            self.LastLine = next(i for i in range(1, len(lst)) if lst[i][:3] == '***')
-            self.Actions = self.find_actions(hand, lst[:self.LastLine])
+        lst_ = lst[hand.AtLine:]
+        if self.exists(lst_):
+            self.Cards = self.find_cards(lst_[0])
+            self.LastLine = next(i for i in range(1, len(lst_)) if lst_[i][:3] == '***')
+            self.Actions = self.find_actions(hand, lst_[:self.LastLine])
+        hand.AtLine += self.LastLine
 
     def __add__(self, other: 'Street'):
         return self.Cards + (other.Cards if isinstance(other, Street) else other)
+
+    def __radd__(self, other: 'Street'):
+        return (other.Cards if isinstance(other, Street) else other) + self.Cards
 
     def __repr__(self):
         return f'[{" ".join(self.Cards)}]' if self.Cards else f'There is no {self.__class__.__name__.lower()}'
@@ -35,22 +40,22 @@ class Street:
             elif 'calls' in s:
                 v = float(s[s.find(CURRENCY) + 1:])
                 ret.append(Call(i, v))
-                hand.Players[i].Bet += v
+                hand.Players[i].Investment += v
                 hand.Pot.append(v + hand.Pot[-1])
             elif 'bets' in s:
                 v = float(s[s.find(CURRENCY) + 1:])
                 ret.append(Bet(i, v))
-                hand.Players[i].Bet += v
+                hand.Players[i].Investment += v
                 hand.Pot.append(v + hand.Pot[-1])
             elif 'raise' in s:
                 v = float(s[s.find('to') + 4:])
                 ret.append(Raise(i, v))
-                hand.Players[i].Bet += v
+                hand.Players[i].Investment += v
                 hand.Pot.append(v + hand.Pot[-1])
             elif 'Uncalled' in s:
                 v = float(s[s.find(CURRENCY) + 1:s.find(')')])
                 hand.Pot[-1] -= v
-                hand.Players[s[s.find('to') + 3:]].Bet -= v
+                hand.Players[s[s.find('to') + 3:]].Investment -= v
         return ret
 
     def find_cards(self, s):
