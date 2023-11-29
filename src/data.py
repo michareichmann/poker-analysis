@@ -1,4 +1,4 @@
-from utils.helpers import Dir
+from utils.helpers import Dir, print_table, colored
 import pandas as pd
 import numpy as np
 from typing import List, Dict
@@ -45,13 +45,19 @@ class Player:
         self.SB = 0.
         self.BB = 0.
         self.Investment = 0.
+        self.Value = 0.
 
     def __repr__(self):
-        return f'Player {self.ID} on seat {self.Seat}'
+        return f'Player {self.ID} ({self.Position})'
 
     @property
     def committment(self):
         return self.Ante + self.SB + self.BB + self.Investment
+
+    @property
+    def value_str(self):
+        v = self.Value - self.committment
+        return colored(f'{CURRENCY}{v:.2f}', 'red' if v < 0 else None if v == 0 else 'green')
 
     def set_ante(self, v: float):
         self.Ante = v
@@ -64,6 +70,9 @@ class Player:
 
     def set_hole_cards(self, s: List[str]):
         self.HoleCards = s
+
+    def set_value(self, v: float):
+        self.Value = v
 
 
 class Hero(Player):
@@ -107,6 +116,9 @@ class Hand:
 
         self.Board = self.Flop + self.Turn + self.River
 
+        self.Rake = 0.
+        self.Jackpot = 0.
+
         self.summarise(lst)
 
     def __repr__(self):
@@ -142,7 +154,8 @@ class Hand:
                 self.Players[i].set_big_blind(v)
 
     def add_hole_cards(self, lst):
-        for s in lst[self.AtLine:self.NPlayers]:
+        fl = self.AtLine + 1
+        for s in lst[fl:fl + self.NPlayers]:
             pos = s.find('[')
             if pos == -1:
                 continue
@@ -151,4 +164,16 @@ class Hand:
         self.AtLine += self.NPlayers
 
     def summarise(self, lst):
-        ...
+        s = lst[self.AtLine + 1]
+        self.Players[s[:s.find(' ')]].set_value(float(s[s.find(CURRENCY) + 1:s.find('from') - 1]))
+        data = lst[self.AtLine + 3].split('|')
+        self.Rake = float(data[1][data[1].find(CURRENCY) + 1:])
+        self.Jackpot = float(data[2][data[2].find(CURRENCY) + 1:])
+        for s, pl in zip(lst[self.AtLine + 5:], self.Players.values()):
+            if '[' in s:
+                pl.set_hole_cards(s[s.find('[') + 1:s.find(']')].split())
+
+    def show_players(self):
+        header = ['ID', 'Position', 'Hand', '\b' * 5 + 'Value']
+        rows = [[pl.ID, pl.Position, f'[{" ".join(pl.HoleCards)}]', pl.value_str] for pl in self.Players.values()]
+        print_table(rows, header, form=['l', 'l', 'l', 'r'])
