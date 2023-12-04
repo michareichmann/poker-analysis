@@ -87,13 +87,14 @@ class Hand:
 
     def __init__(self, lst: List[str]):
 
+        self.NLines = len(lst)
         self.AtLine = 0
+
         fl = lst[0]  # first line
 
         self.Number = fl[fl.find('#'):fl.find(':')]
         self.Type = fl[fl.find(':') + 2:fl.find('(') - 1]
         self.Limits = self.find_limits(fl)
-        self.List = lst
         self.Date = datetime.strptime(fl[fl.find('-') + 2:], '%Y/%m/%d %H:%M:%S')
 
         sl = lst[1]  # second line
@@ -142,16 +143,18 @@ class Hand:
         return {pl.ID: pl for pl in players}
 
     def add_blinds_and_ante(self, lst):
-        first_line = 2 + self.NPlayers
-        self.AtLine = next(i for i in range(first_line, 2 * self.NPlayers + 5) if lst[i] == '*** HOLE CARDS ***')
-        for s in lst[first_line:self.AtLine]:
-            i, v = s[:s.find(':')], float(s[s.find(CURRENCY) + 1:])
+        for i in range(2 + self.NPlayers, self.NLines):
+            s = lst[i]
+            if s.startswith('*'):
+                self.AtLine = i
+                break
+            id_, v = s[:s.find(':')], float(s[s.find(CURRENCY) + 1:])
             if 'ante' in s:
-                self.Players[i].set_ante(v)
+                self.Players[id_].set_ante(v)
             elif 'small blind' in s:
-                self.Players[i].set_small_blind(v)
+                self.Players[id_].set_small_blind(v)
             elif 'big blind' in s:
-                self.Players[i].set_big_blind(v)
+                self.Players[id_].set_big_blind(v)
 
     def add_hole_cards(self, lst):
         fl = self.AtLine + 1
