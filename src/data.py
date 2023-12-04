@@ -46,6 +46,7 @@ class Player:
         self.BB = 0.
         self.Investment = 0.
         self.Value = 0.
+        self.IsAllIn = False
 
     def __repr__(self):
         return f'Player {self.ID} ({self.Position})'
@@ -73,6 +74,9 @@ class Player:
 
     def set_value(self, v: float):
         self.Value = v
+
+    def push_all_in(self):
+        self.IsAllIn = True
 
 
 class Hero(Player):
@@ -164,7 +168,7 @@ class Hand:
                 continue
             i, v = s[s.find('to') + 3:pos - 1], s[pos + 1:-1].split()
             self.Players[i].set_hole_cards(v)
-        self.AtLine += self.NPlayers
+        self.AtLine += self.NPlayers + 1
 
     def summarise(self, lst):
         s = lst[self.AtLine + 1]

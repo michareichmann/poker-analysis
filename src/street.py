@@ -37,25 +37,21 @@ class Street:
                 ret.append(Fold(i))
             elif 'checks' in s:
                 ret.append(Check(i))
-            elif 'calls' in s:
-                v = float(s[s.find(CURRENCY) + 1:])
-                ret.append(Call(i, v))
-                hand.Players[i].Investment += v
-                hand.Pot.append(v + hand.Pot[-1])
-            elif 'bets' in s:
-                v = float(s[s.find(CURRENCY) + 1:])
-                ret.append(Bet(i, v))
-                hand.Players[i].Investment += v
-                hand.Pot.append(v + hand.Pot[-1])
-            elif 'raise' in s:
-                v = float(s[s.find('to') + 4:])
-                ret.append(Raise(i, v))
-                hand.Players[i].Investment += v
-                hand.Pot.append(v + hand.Pot[-1])
             elif 'Uncalled' in s:
                 v = float(s[s.find(CURRENCY) + 1:s.find(')')])
                 hand.Pot[-1] -= v
                 hand.Players[s[s.find('to') + 3:]].Investment -= v
+            for word, action in [('call', Call), ('bets', Bet), ('raise', Raise)]:
+                if word in s:
+                    pos = s.find(' and')
+                    if pos != -1:
+                        hand.Players[i].push_all_in()
+                    start = s.find('to') + 4 if word == 'raise' else s.find(CURRENCY) + 1
+                    v = float(s[start:] if pos == -1 else s[start:pos])
+                    ret.append(action(i, v))
+                    hand.Players[i].Investment += v
+                    hand.Pot.append(v + hand.Pot[-1])
+                    break
         return ret
 
     def find_cards(self, s):
