@@ -176,11 +176,14 @@ class Hand:
 
     def summarise(self, lst):
         s = lst[self.AtLine + 1]
-        self.Players[s[:s.find(' ')]].set_value(float(s[s.find(CURRENCY) + 1:s.find('from') - 1]))
-        data = lst[self.AtLine + 3].split('|')
+        while 'collected' in s:
+            self.Players[s[:s.find(' ')]].set_value(float(s[s.find(CURRENCY) + 1:s.find('from') - 1]))
+            self.AtLine += 1
+            s = lst[self.AtLine + 1]
+        data = lst[self.AtLine + 2].split('|')
         self.Rake = float(data[1][data[1].find(CURRENCY) + 1:])
         self.Jackpot = float(data[2][data[2].find(CURRENCY) + 1:])
-        for s, pl in zip(lst[self.AtLine + 5:], self.Players.values()):
+        for s, pl in zip(lst[self.AtLine + 4:], self.Players.values()):
             if '[' in s:
                 pl.set_hole_cards(s[s.find('[') + 1:s.find(']')].split())
 
