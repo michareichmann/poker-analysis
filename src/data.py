@@ -51,6 +51,10 @@ class Player:
     def __repr__(self):
         return f'Player {self.ID} ({self.Position})'
 
+    def __lt__(self, other: 'Player'):
+        p0, p1 = [range(len(POSITIONS))[POSITIONS.index(p)] for p in [self.Position, other.Position]]
+        return p0 <= p1
+
     @property
     def committment(self):
         return self.Ante + self.SB + self.BB + self.Investment
@@ -182,5 +186,5 @@ class Hand:
 
     def show_players(self):
         header = ['ID', 'Position', 'Hand', '\b' * 5 + 'Value']
-        rows = [[pl.ID, pl.Position, f'[{" ".join(pl.HoleCards)}]', pl.value_str] for pl in self.Players.values()]
+        rows = [[pl.ID, pl.Position, f'[{" ".join(pl.HoleCards)}]', pl.value_str] for pl in sorted(self.Players.values())]
         print_table(rows, header, form=['l', 'l', 'l', 'r'])
