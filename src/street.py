@@ -41,6 +41,7 @@ class Street:
                 v = float(s[s.find(CURRENCY) + 1:s.find(')')])
                 hand.Pot[-1] -= v
                 hand.Players[s[s.find('to') + 3:]].Investment -= v
+                break
             for word, action in [('call', Call), ('bets', Bet), ('raise', Raise)]:
                 if word in s:
                     pos = s.find(' and')
