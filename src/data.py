@@ -109,11 +109,11 @@ class Hand:
         fa = sl.find('\'') + 1
         self.Table = sl[fa:sl.find('\'', fa)]
         self.MaxPlayers = int(sl[sl.find('\'', fa) + 2:sl.find('-')])
-        self.Button = int(sl[sl.find('#') + 1])
+        self.Button = 0
         self.Players = self.find_players(lst)
         self.NPlayers = len(self.Players)
-        self.find_positions()
         self.add_blinds_and_ante(lst)
+        self.find_positions()
         self.add_hole_cards(lst)
 
         self.Pot = [sum(pl.committment for pl in self.Players.values())]
@@ -138,7 +138,7 @@ class Hand:
         return sum(pl.committment for pl in self.Players.values())
 
     def find_positions(self):
-        for pos, pl in zip(np.roll(POSITIONS[-self.NPlayers:], self.Button + 1), self.Players.values()):
+        for pos, pl in zip(np.roll(POSITIONS[-self.NPlayers:], self.Button + 3), self.Players.values()):
             pl.Position = pos
 
     @staticmethod
@@ -160,6 +160,8 @@ class Hand:
             if 'ante' in s:
                 self.Players[id_].set_ante(v)
             elif 'small blind' in s:
+                self.Button = list(self.Players).index(id_) - 1
+                self.Button += self.NPlayers if self.Button < 0 else 0
                 self.Players[id_].set_small_blind(v)
             elif 'big blind' in s:
                 self.Players[id_].set_big_blind(v)
