@@ -188,6 +188,7 @@ class Hand:
                 self.Players[s[:s.find(' ')]].add_value(float(s[s.find(CURRENCY) + 1:s.find('from') - 1]))
                 self.AtLine += 1
                 s = lst[self.AtLine]
+            self.AtLine += 1
         data = lst[self.AtLine].split('|')
         self.Rake = float(data[1][data[1].find(CURRENCY) + 1:])
         self.Jackpot = float(data[2][data[2].find(CURRENCY) + 1:])

@@ -96,7 +96,7 @@ class River(Street):
     def __init__(self, hand, lst):
         super().__init__(hand, lst)
         if self.MultiDeal:
-            hand.AtLine += len(hand.Turn.Cards) + len(self.Cards) - 2
+            hand.AtLine += len(hand.Flop.Cards) // 3 + len(hand.Turn.Cards) + len(self.Cards) - 3
 
     def find_cards(self, s):
         return [s[-3:-1]]
