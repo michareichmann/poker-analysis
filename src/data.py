@@ -44,6 +44,7 @@ class Player:
         self.Ante = 0.
         self.SB = 0.
         self.BB = 0.
+        self.Straddle = 0.
         self.Investment = 0.
         self.Value = 0.
         self.IsAllIn = False
@@ -57,7 +58,7 @@ class Player:
 
     @property
     def committment(self):
-        return self.Ante + self.SB + self.BB + self.Investment
+        return self.Ante + self.SB + self.BB + self.Straddle + self.Investment
 
     @property
     def value_str(self):
@@ -72,6 +73,9 @@ class Player:
 
     def set_big_blind(self, v: float):
         self.BB = v
+
+    def set_straddle(self, v: float):
+        self.Straddle = v
 
     def set_hole_cards(self, s: List[str]):
         self.HoleCards = s
@@ -156,7 +160,14 @@ class Hand:
             if s.startswith('*'):
                 self.AtLine = i
                 break
-            id_, v = s[:s.find(':')], float(s[s.find(CURRENCY) + 1:])
+
+            id_ = s[:s.find(':')]
+            pos = s.find(' and')
+            if pos != -1:
+                s = s[:pos]
+                self.Players[id_].push_all_in()
+            v = float(s[s.find(CURRENCY) + 1:])
+
             if 'ante' in s:
                 self.Players[id_].set_ante(v)
             elif 'small blind' in s:
@@ -165,6 +176,8 @@ class Hand:
                 self.Players[id_].set_small_blind(v)
             elif 'big blind' in s:
                 self.Players[id_].set_big_blind(v)
+            elif 'straddle' in s:
+                self.Players[id_].set_straddle(v)
 
     def add_hole_cards(self, lst):
         fl = self.AtLine + 1
