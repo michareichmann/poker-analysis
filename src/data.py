@@ -137,6 +137,9 @@ class Hand:
     def __repr__(self):
         return f'Poker Hand {self.Number}: {self.Type} (${self.Limits[0]}/${self.Limits[1]}) - {self.Date}'
 
+    def __lt__(self, other: 'Hand'):
+        return self.Date < other.Date
+
     @property
     def pot(self):
         return sum(pl.committment for pl in self.Players.values())
