@@ -6,12 +6,15 @@ class Street:
     Cards = []
     Actions = []
     LastLine = 0
+    MaxRuns = 4
 
     def __init__(self, hand, lst):
 
+        self.MultiDeal = False
+
         lst_ = lst[hand.AtLine:]
         if self.exists(lst_):
-            self.Cards = self.find_cards(lst_[0])
+            self.Cards = self.find_all_cards(lst_)
             self.LastLine = next(i for i in range(1, len(lst_)) if lst_[i][:3] == '***')
             self.Actions = self.find_actions(hand, lst_[:self.LastLine])
         hand.AtLine += self.LastLine
@@ -26,7 +29,12 @@ class Street:
         return f'[{" ".join(self.Cards)}]' if self.Cards else f'There is no {self.__class__.__name__.lower()}'
 
     def exists(self, lst):
-        return lst[0].startswith(f'*** {self.__class__.__name__.upper()}')
+        if lst[0].startswith(f'*** {self.__class__.__name__.upper()}'):
+            return True
+        if lst[0].startswith(f'*** FIRST {self.__class__.__name__.upper()}'):
+            self.MultiDeal = True
+            return True
+        return False
 
     @staticmethod
     def find_actions(hand, lst):
@@ -55,8 +63,13 @@ class Street:
                     break
         return ret
 
+    def find_all_cards(self, lst):
+        if not self.MultiDeal:
+            return self.find_cards(lst[0])
+        return sum([self.find_cards(line) for line in filter(lambda x: self.__class__.__name__.upper() in x, lst[:2 * Street.MaxRuns])], start=[])
+
     def find_cards(self, s):
-        return s[14:-1].split()
+        return s[-9:-1].split()
 
 
 class PreFlop(Street):
@@ -79,6 +92,11 @@ class Turn(Street):
 
 
 class River(Street):
+
+    def __init__(self, hand, lst):
+        super().__init__(hand, lst)
+        if self.MultiDeal:
+            hand.AtLine += len(hand.Turn.Cards) + len(self.Cards) - 2
 
     def find_cards(self, s):
         return [s[-3:-1]]

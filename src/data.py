@@ -20,8 +20,8 @@ class Data:
     def load_file_names():
         return list(Data.Dir.rglob('*.txt'))
 
-    def load_file(self):
-        d = np.array(pd.read_csv(self.load_file_names()[0], sep='\t', header=None, skip_blank_lines=False)).flatten()
+    def load(self):
+        d = np.concatenate([pd.read_csv(f, sep='\t', header=None, skip_blank_lines=False) for f in self.load_file_names()]).flatten()
         nan_inds = np.arange(d.size, dtype='i')[pd.isnull(d)]
         d = np.delete(d, nan_inds)  # remove nan values
         return np.split(d, np.unique(nan_inds - np.arange(nan_inds.size))[:-1])
@@ -76,8 +76,8 @@ class Player:
     def set_hole_cards(self, s: List[str]):
         self.HoleCards = s
 
-    def set_value(self, v: float):
-        self.Value = v
+    def add_value(self, v: float):
+        self.Value += v
 
     def push_all_in(self):
         self.IsAllIn = True
@@ -177,12 +177,18 @@ class Hand:
         self.AtLine += self.NPlayers + 1
 
     def summarise(self, lst):
-        s = lst[self.AtLine + 1]
-        while 'collected' in s:
-            self.Players[s[:s.find(' ')]].set_value(float(s[s.find(CURRENCY) + 1:s.find('from') - 1]))
-            self.AtLine += 1
-            s = lst[self.AtLine + 1]
-        data = lst[self.AtLine + 2].split('|')
+        self.AtLine += 1
+        if self.River.MultiDeal:
+            for s in lst[self.AtLine:self.AtLine + len(self.River.Cards) * 2:2]:
+                self.Players[s[:s.find(' ')]].add_value(float(s[s.find(CURRENCY) + 1:s.find('from') - 1]))
+                self.AtLine += 2
+        else:
+            s = lst[self.AtLine]
+            while 'collected' in s:
+                self.Players[s[:s.find(' ')]].add_value(float(s[s.find(CURRENCY) + 1:s.find('from') - 1]))
+                self.AtLine += 1
+                s = lst[self.AtLine]
+        data = lst[self.AtLine].split('|')
         self.Rake = float(data[1][data[1].find(CURRENCY) + 1:])
         self.Jackpot = float(data[2][data[2].find(CURRENCY) + 1:])
         for s, pl in zip(lst[self.AtLine + 4:], self.Players.values()):
