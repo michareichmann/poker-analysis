@@ -215,7 +215,7 @@ class Hand:
         data = lst[self.AtLine].split('|')
         self.Rake = float(data[1][data[1].find(CURRENCY) + 1:])
         self.Jackpot = float(data[2][data[2].find(CURRENCY) + 1:])
-        for s, pl in zip(lst[self.AtLine + 4:], self.Players.values()):
+        for s, pl in zip(lst[self.AtLine + 2:], self.Players.values()):
             if '[' in s:
                 pl.set_hole_cards(s[s.find('[') + 1:s.find(']')].split())
 
