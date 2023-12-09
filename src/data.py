@@ -138,7 +138,7 @@ class Hand:
         return f'Poker Hand {self.Number}: {self.Type} (${self.Limits[0]}/${self.Limits[1]}) - {self.Date}'
 
     def __lt__(self, other: 'Hand'):
-        return self.Date < other.Date
+        return self.Number < other.Number
 
     @property
     def pot(self):
