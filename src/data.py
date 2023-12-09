@@ -68,9 +68,13 @@ class Player:
         return self.Ante + self.SB + self.BB + self.Straddle + self.Investment
 
     @property
-    def value_str(self):
-        v = self.Value - self.committment
+    def net_str(self):
+        v = self.net
         return colored(f'{CURRENCY}{v:.2f}', 'red' if v < 0 else None if v == 0 else 'green')
+
+    @property
+    def net(self):
+        return self.Value - self.committment
 
     def set_ante(self, v: float):
         self.Ante = v
@@ -221,5 +225,5 @@ class Hand:
 
     def show_players(self):
         header = ['ID', 'Position', 'Hand', '\b' * 5 + 'Value']
-        rows = [[pl.ID, pl.Position, f'[{" ".join(pl.HoleCards)}]', pl.value_str] for pl in sorted(self.Players.values())]
+        rows = [[pl.ID, pl.Position, f'[{" ".join(pl.HoleCards)}]', pl.net_str] for pl in sorted(self.Players.values())]
         print_table(rows, header, form=['l', 'l', 'l', 'r'])
