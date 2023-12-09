@@ -4,6 +4,7 @@ import numpy as np
 from typing import List, Dict
 from datetime import datetime
 from src.street import *
+from zipfile import ZipFile
 
 
 POSITIONS = ['UTG1', 'UTG2', 'UTG3', 'MP1', 'MP2', 'MP3', 'CO', 'BUT', 'SB', 'BB']
@@ -14,17 +15,23 @@ class Data:
     Dir = Dir.joinpath('data')
 
     def __init__(self):
-        ...
+
+        self.Hands = self.load_hands()
 
     @staticmethod
-    def load_file_names():
-        return list(Data.Dir.rglob('*.txt'))
+    def find_zip_files():
+        return [ZipFile(p) for p in Data.Dir.glob('*.zip')]
 
-    def load(self):
-        d = np.concatenate([pd.read_csv(f, sep='\t', header=None, skip_blank_lines=False) for f in self.load_file_names()]).flatten()
+    @staticmethod
+    def read_zip_file(f: ZipFile):
+        d = np.concatenate([pd.read_csv(f.open(zf), sep='\t', header=None, skip_blank_lines=False) for zf in f.filelist]).flatten()
         nan_inds = np.arange(d.size, dtype='i')[pd.isnull(d)]
         d = np.delete(d, nan_inds)  # remove nan values
         return np.split(d, np.unique(nan_inds - np.arange(nan_inds.size))[:-1])
+
+    def load_hands(self):
+        f = self.find_zip_files()[0]
+        return sorted([Hand(data) for data in self.read_zip_file(f)])
 
 
 class Player:
