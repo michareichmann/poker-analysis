@@ -1,3 +1,6 @@
 [submodule "utils"]
 	path = utils
 	url = https://github.com/michareichmann/utils.git
+[submodule "plotting"]
+	path = plotting
+	url = https://github.com/michareichmann/rootplots.git
