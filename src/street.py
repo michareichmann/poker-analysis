@@ -80,6 +80,9 @@ class PreFlop(Street):
     def find_cards(self, s):
         return []
 
+    def __repr__(self):
+        return '\n'.join(f'{a!r}' for a in self.Actions)
+
 
 class Flop(Street):
     ...
