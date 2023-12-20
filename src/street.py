@@ -26,7 +26,18 @@ class Street:
         return (other.Cards if isinstance(other, Street) else other) + self.Cards
 
     def __repr__(self):
-        return f'[{" ".join(self.Cards)}]' if self.Cards else f'There is no {self.__class__.__name__.lower()}'
+        return f'[{self.card_str}]' if self.Cards else f'There is no {self.__class__.__name__.lower()}'
+
+    def __str__(self):
+        return self.__class__.__name__
+
+    @property
+    def action_str(self) -> str:
+        return '\n'.join(f'{a!r}' for a in self.Actions)
+
+    @property
+    def card_str(self) -> str:
+        return " ".join(self.Cards)
 
     def exists(self, lst):
         if lst[0].startswith(f'*** {self.__class__.__name__.upper()}'):
@@ -81,7 +92,11 @@ class PreFlop(Street):
         return []
 
     def __repr__(self):
-        return '\n'.join(f'{a!r}' for a in self.Actions)
+        return self.action_str
+
+    @property
+    def card_str(self):
+        return ''
 
 
 class Flop(Street):
