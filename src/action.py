@@ -3,13 +3,13 @@ CURRENCY = '$'
 
 class Action:
 
-    def __init__(self, pl, value=0.):
+    def __init__(self, pid, value=0.):
 
-        self.Player = pl
+        self.PlayerID = pid
         self.Value = value
 
     def __repr__(self):
-        return f'{self.Player} {self.__class__.__name__.lower()}s'
+        return f'{self.PlayerID} {self.__class__.__name__.lower()}s'
 
     @property
     def value_str(self):
