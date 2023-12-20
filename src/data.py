@@ -1,12 +1,14 @@
-from utils.helpers import Dir, print_table, colored, info
-from utils.classes import PBAR, update_pbar
-import pandas as pd
-import numpy as np
-from typing import List, Dict
 from datetime import datetime
-from src.street import *
+from typing import List, Dict
 from zipfile import ZipFile, ZipInfo
 
+import numpy as np
+import numpy.typing as npt
+import pandas as pd
+
+from src.street import *
+from utils.classes import PBAR, update_pbar
+from utils.helpers import Dir, print_table, colored, info, print_small_banner
 
 POSITIONS = ['UTG1', 'UTG2', 'UTG3', 'MP1', 'MP2', 'MP3', 'CO', 'BUT', 'SB', 'BB']
 
@@ -36,10 +38,59 @@ class Data:
         return pd.read_csv(f.open(zf), sep='\t', header=None, skip_blank_lines=False)
 
     def load_hands(self):
-        f = self.find_zip_files()[0]
+        f = self.find_zip_files()[1]
         info('Reading zip files ...')
         PBAR.start(len(f.filelist))
         return sorted([Hand(data) for data in self.read_zip_file(f)])
+
+
+class PStats(list):
+
+    """ Holds list of individual player stats:
+    [VPIP, PFR, ATS, FTS, 3bet, f3b/c3b, Cbet, fCb, Dbet, WTS] """
+
+    def __init__(self):
+        super().__init__([False] * 2 + [None] * 9)
+
+    @property
+    def pfr(self):
+        return self[1]
+
+    def reset(self):
+        self.__init__()
+
+    def set_vpip(self):
+        self[0] = True
+
+    def set_pfr(self):
+        self[1] = True
+
+    def set_ats(self, s: bool):
+        self[2] = s
+
+    def set_fts(self, s: bool):
+        self[3] = s
+
+    def set_3bet(self, s: bool):
+        self[4] = s
+
+    def set_f3b(self, s: bool):
+        self[5] = s
+
+    def set_c3b(self, s: bool):
+        self[6] = s
+
+    def set_cbet(self, s: bool):
+        self[7] = s
+
+    def set_fcb(self, s: bool):
+        self[8] = s
+
+    def set_dbet(self, s: bool):
+        self[9] = s
+
+    def set_wts(self, s: bool):
+        self[10] = s
 
 
 class Player:
@@ -63,6 +114,8 @@ class Player:
         self.Investment = 0.
         self.Value = 0.
         self.IsAllIn = False
+
+        self.Stats = PStats()
 
     def __repr__(self):
         return f'Player {self.ID} ({self.Position})'
@@ -116,7 +169,7 @@ def make_player(s: str):
 
 class Hand:
 
-    def __init__(self, lst: List[str]):
+    def __init__(self, lst: List[str] | npt.NDArray[np.str_]):
 
         self.NLines = len(lst)
         self.AtLine = 0
@@ -145,6 +198,7 @@ class Hand:
         self.Flop = Flop(self, lst)
         self.Turn = Turn(self, lst)
         self.River = River(self, lst)
+        self.Streets = [self.PreFlop, self.Flop, self.Turn, self.River]
 
         self.Board = self.Flop + self.Turn + self.River
 
@@ -160,8 +214,16 @@ class Hand:
         return self.Number < other.Number
 
     @property
+    def limit_str(self):
+        return '/'.join(str(i) for i in self.Limits)
+
+    @property
     def pot(self):
         return sum(pl.committment for pl in self.Players.values())
+
+    @property
+    def all_actions(self):
+        return sum([s.Actions for s in self.Streets], start=[])
 
     def find_positions(self):
         for pos, pl in zip(np.roll(POSITIONS[-self.NPlayers:], self.Button + 3), self.Players.values()):
