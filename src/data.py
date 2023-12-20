@@ -235,3 +235,9 @@ class Hand:
         header = ['ID', 'Position', 'Hand', '\b' * 5 + 'Value']
         rows = [[pl.ID, pl.Position, f'[{" ".join(pl.HoleCards)}]', pl.net_str] for pl in sorted(self.Players.values())]
         print_table(rows, header, form=['l', 'l', 'l', 'r'])
+
+    def print_actions(self):
+        for s in self.Streets:
+            print_small_banner(f'{s}: {s.card_str}', color='green')
+            print(f'{s.action_str}\n')
+
